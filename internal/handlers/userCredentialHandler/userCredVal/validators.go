@@ -1,4 +1,4 @@
-package userCredentialsValidators
+package userCredVal
 
 import (
 	"api_go/internal/models"
@@ -9,7 +9,7 @@ import (
 
 type userCred struct {
 	Email    string ` validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+	Password string `json:"password" validate:"required,min=8,max=50"`
 }
 
 type signUpRequest struct {

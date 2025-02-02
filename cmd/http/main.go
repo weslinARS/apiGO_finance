@@ -11,8 +11,9 @@ import (
 func main() {
 	config.LoadEnv()
 	app := fiber.New()
+	fmt.Println("Connecting to DB")
 	config.ConnectDB()
-	fmt.Println("Hello, World!")
+	fmt.Println("Connected to DB")
 	app.Get("/", func(c *fiber.Ctx) error {
 		err := c.SendString("API GO running")
 		return err
