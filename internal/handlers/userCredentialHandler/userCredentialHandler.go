@@ -33,7 +33,7 @@ func SignUp(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(400).SendString("Error parsing body")
 	}
-	//verify if there is an user with the same email
+	//verify if there is a user with the same email
 	var user models.User
 	config.DB.Where("email = ?", body.UserInfo.Email).Select("id").First(&user)
 	if id, err := uuid.Parse(user.ID); id != uuid.Nil && err == nil {
@@ -50,9 +50,6 @@ func SignUp(ctx *fiber.Ctx) error {
 		fmt.Println("Error hashing password", err)
 		return ctx.Status(500).SendString("Error hashing password")
 	}
-	fmt.Println("Hashed password", string(hashedPassword))
-	// create userCred object
-
 	// create user in DB
 	newUser := models.User{
 		Email:       body.UserInfo.Email,
@@ -67,7 +64,6 @@ func SignUp(ctx *fiber.Ctx) error {
 		fmt.Println("Error creating user", err)
 		return ctx.Status(500).SendString("Error creating user")
 	} else {
-		fmt.Println("User created", newUser.ID)
 		// create use credential in DB \
 		userCred := models.UserCredential{
 			UserId:    newUser.ID,
@@ -75,15 +71,11 @@ func SignUp(ctx *fiber.Ctx) error {
 			Password:  string(hashedPassword),
 		}
 		if err := config.DB.Create(&userCred).Error; err != nil {
-			fmt.Println("Error creating user credential", err)
 			return ctx.Status(500).SendString("Error creating user credential")
 		} else {
-			fmt.Println("User credential created", userCred.UserId)
 			// enviar informacion de usuario
 
 			//serialized in JSON:API
-			ctx.Set("Content-Type", jsonapi.MediaType)
-			fmt.Println("User Creadted ", &body.UserInfo.ID)
 			err := jsonapi.MarshalOnePayloadEmbedded(ctx.Response().BodyWriter(), &newUser)
 			if err != nil {
 				return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
