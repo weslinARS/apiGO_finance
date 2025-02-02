@@ -18,7 +18,7 @@ func ConnectDB() {
 		log.Panic("Error connecting to database", err)
 	}
 	// Migrate the schema
-	errorMig := db.AutoMigrate(&models.User{}, &models.UserCredential{})
+	errorMig := db.AutoMigrate(&models.User{}, &models.UserCredential{}, &models.Account{})
 	if errorMig != nil {
 		log.Panicln("Error migrating schema", errorMig)
 		return

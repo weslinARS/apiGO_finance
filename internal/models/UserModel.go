@@ -13,6 +13,7 @@ type User struct {
 	Gender         string         `json:"gender" validate:"required,oneof=Female Male" jsonapi:"attr,gender"`
 	DateOfBirth    string         `json:"dateOfBirth" gorm:"type:date" validate:"required,datetimeF=2006-01-02" jsonapi:"attr,dateOfBirth" `
 	UserCredential UserCredential `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE;"`
+	Accounts       []Account      `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE;"`
 }
 
 func (u *User) JSONAPIMeta() *map[string]interface{} {
