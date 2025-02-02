@@ -6,14 +6,54 @@ import (
 	"api_go/internal/utils"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/jsonapi"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"os"
+	"time"
 )
 
 func Login(c *fiber.Ctx) error {
-
-	return c.SendString("Login")
+	// parse body
+	var body userCred
+	err := c.BodyParser(&body)
+	if err != nil {
+		return c.Status(400).SendString("Error parsing body")
+	}
+	var userCredential models.UserCredential
+	// get user credential from DB
+	config.DB.Where("user_email =?", body.Email).First(&userCredential)
+	// verify if user exists
+	if userCredential.UserId == "" {
+		return c.Status(fiber.StatusBadRequest).SendString("User not found")
+	}
+	// verify if password is correct
+	err = bcrypt.CompareHashAndPassword([]byte(userCredential.Password), []byte(body.Password))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString("Invalid password")
+	}
+	//get user information
+	var user models.User
+	config.DB.Where("id =?", userCredential.UserId).First(&user)
+	if user.ID == "" {
+		return c.Status(fiber.StatusBadRequest).SendString("User Information not found")
+	}
+	// return token
+	claims := jwt.MapClaims{
+		"userId": userCredential.UserId,
+		"email":  userCredential.UserEmail,
+		"exp":    time.Now().Add(time.Hour * 72).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	t, err := token.SignedString([]byte(os.Getenv("JWTSECRET")))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString("Error generating token" + err.Error())
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"userInfo": user,
+		"token":    t,
+	})
 }
 
 type userCred struct {
